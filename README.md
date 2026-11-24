@@ -62,3 +62,7 @@ For Android and iOS, a future native package can reuse this interface and CSV pa
 - `src/app.js` manages transactions, filters, and browser file operations.
 - `src/features.js` implements the additional views and their workflows.
 - `build.py` bundles the source into `Daybook.html`; run it with Python 3 only when changing the source.
+
+## License
+
+Daybook is released under the [MIT License](LICENSE).
