@@ -1,0 +1,9 @@
+# Local ledgers and backups
+*.csv
+
+# Local build artifacts and configuration
+__pycache__/
+.env
+.env.*
+.DS_Store
+Thumbs.db
