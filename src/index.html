@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daybook · Personal ledger</title>
+  <style>/* STYLES */</style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Daybook</div>
+      <div class="file-bar">
+        <button id="open">Open CSV</button>
+        <button id="new">New CSV</button>
+        <button id="save" disabled>Save</button>
+        <button id="save-as" disabled>Save as</button>
+        <input type="file" id="upload" accept=".csv,text/csv" hidden>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="intro">
+      <div>
+        <h1>Your ledger</h1>
+        <p class="file-status"><span id="dot"></span><span id="file-status">No CSV open</span></p>
+        <button id="confirm-download" hidden>Confirm downloaded CSV</button>
+      </div>
+      <button class="primary" id="add" disabled><span aria-hidden="true">＋</span> Add transaction</button>
+    </section>
+    <nav class="view-nav" aria-label="Ledger views">
+      <button data-view="transactions" aria-current="page">Transactions</button>
+      <button data-view="reports">Reports</button>
+      <button data-view="budgets">Budgets</button>
+      <button data-view="accounts">Accounts</button>
+      <button data-view="recurring">Recurring</button>
+      <button data-view="debts">Money owed</button>
+      <button data-view="backups">Backups</button>
+    </nav>
+    <div id="transactions-view">
+    <section class="summary" aria-label="Ledger totals">
+      <article class="balance"><p>Net income</p><strong id="balance">0.00</strong><small>All income minus all expenses</small></article>
+      <article><p class="income">↓ &nbsp; Total income</p><strong id="income">0.00</strong></article>
+      <article><p class="expense">↑ &nbsp; Total expenses</p><strong id="expense">0.00</strong></article>
+    </section>
+    <section class="transactions" aria-labelledby="transactions-title">
+      <div class="section-bar">
+        <div><h2 id="transactions-title">Transactions</h2><p id="count">0 entries</p></div>
+        <div class="filters">
+          <input type="search" id="search" aria-label="Search transactions" placeholder="Search transactions">
+          <select id="filter" aria-label="Transaction type">
+            <option value="all">All types</option>
+            <option value="credit">Income</option>
+            <option value="debit">Expenses</option>
+            <option value="transfer">Transfers</option>
+            <option value="debt">Lending and repayments</option>
+          </select>
+          <select id="month" aria-label="Filter by month"><option value="">All months</option></select>
+          <button id="more-filters" type="button" aria-expanded="false" aria-controls="advanced-filters">More filters</button>
+          <button id="clear-filters" hidden>Clear filters</button>
+        </div>
+      </div>
+      <div id="advanced-filters" class="advanced-filters" hidden>
+        <label>Account<select id="account-filter"><option value="">All accounts</option></select></label>
+        <label>Category<select id="category-filter"><option value="">All categories</option></select></label>
+        <label>From<input type="date" id="from-filter"></label>
+        <label>To<input type="date" id="to-filter"></label>
+        <label>Min. amount<input type="number" min="0" step="0.01" id="min-filter" placeholder="Any"></label>
+        <label>Max. amount<input type="number" min="0" step="0.01" id="max-filter" placeholder="Any"></label>
+        <label>Sort<select id="sort-filter"><option value="">Newest first</option><option value="oldest">Oldest first</option><option value="high">Highest amount</option><option value="low">Lowest amount</option></select></label>
+      </div>
+      <p id="filter-error" class="filter-error" role="status"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Transaction</th><th scope="col">Category</th><th scope="col">Account</th><th scope="col">Date &amp; time</th><th scope="col" class="numeric">Amount</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody id="entries"></tbody>
+        </table>
+      </div>
+      <div id="empty" class="empty">
+        <span class="empty-icon" aria-hidden="true">≡</span>
+        <h3 id="empty-title">Start with a CSV</h3>
+        <p id="empty-text">Create a ledger or open a CSV you already have.</p>
+        <button id="empty-action">Create a ledger</button>
+      </div>
+    </section>
+    </div>
+    <section id="feature-view" class="feature-view" aria-labelledby="feature-heading" hidden>
+      <div class="section-bar feature-heading">
+        <div><h2 id="feature-heading" tabindex="-1"></h2><p id="feature-description"></p></div>
+        <div id="feature-actions" class="filters"></div>
+      </div>
+      <div id="feature-content" class="feature-content"></div>
+    </section>
+    <input id="restore-upload" type="file" accept=".csv,text/csv" hidden>
+    <p class="foot">Your ledger stays on this device until you copy or share the CSV.</p>
+  </main>
+  <p id="notice" role="status" class="notice"></p>
+  <dialog id="editor" aria-labelledby="editor-title">
+    <form id="transaction-form">
+      <div class="editor-heading"><h2 id="editor-title">Add transaction</h2><button id="close-editor" type="button" aria-label="Close">×</button></div>
+      <fieldset>
+        <legend>Transaction type</legend>
+        <label><input type="radio" name="type" value="debit" checked> Expense</label>
+        <label><input type="radio" name="type" value="credit"> Income</label>
+        <label><input type="radio" name="type" value="transfer"> Transfer</label>
+      </fieldset>
+      <label id="counterparty-field"><span id="counterparty-label">Payee</span><input name="counterparty" required placeholder="Who received the money?"></label>
+      <div class="form-grid">
+        <label>Amount<input name="amount" inputmode="decimal" required placeholder="0.00"></label>
+        <label>Category <span class="optional">(optional)</span><input name="category" list="categories" placeholder="e.g. Groceries"><datalist id="categories"></datalist></label>
+        <label><span id="account-label">Account</span><select name="account" required></select></label>
+        <label id="transfer-destination" hidden>To account<select name="to"></select></label>
+        <label>Date<input type="date" name="date" required></label>
+        <label>Time<input type="time" name="time" step="1"></label>
+      </div>
+      <label>Notes <span class="optional">(optional)</span><textarea name="notes" rows="3"></textarea></label>
+      <p id="form-error" role="alert"></p>
+      <div class="editor-actions"><button type="button" id="cancel">Cancel</button><button class="primary" type="submit">Save transaction</button></div>
+    </form>
+  </dialog>
+  <dialog id="feature-editor" aria-labelledby="feature-editor-title">
+    <form id="feature-form">
+      <div class="editor-heading"><h2 id="feature-editor-title"></h2><button id="feature-close" type="button" aria-label="Close">×</button></div>
+      <div id="feature-fields" class="form-grid"></div>
+      <p id="feature-error" class="form-error" role="alert"></p>
+      <div class="editor-actions"><button type="button" id="feature-cancel">Cancel</button><button class="primary" type="submit" id="feature-submit">Save</button></div>
+    </form>
+  </dialog>
+  <script>/* LEDGER */</script>
+  <script>/* FEATURES */</script>
+  <script>/* APP */</script>
+</body>
+</html>
