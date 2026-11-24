@@ -1,0 +1,1437 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daybook · Personal ledger</title>
+  <style>:root {
+  color-scheme: light;
+  --ink: #1a2924;
+  --muted: #51635a;
+  --line: #d9e1d9;
+  --field: #f8faf6;
+  --paper: #fff;
+  --ground: #f0f3ed;
+  --green: #234c3b;
+  --income: #266044;
+  --expense: #983d2f;
+  --radius: 12px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; color: var(--ink); background: var(--ground); min-height: 100dvh; }
+h1, h2, h3, p { margin: 0; }
+h1, h2 { letter-spacing: -.045em; }
+button, input, select, textarea { font: inherit; }
+button, input:not([type=radio]), select, textarea {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 9px 12px;
+  min-height: 39px;
+}
+button { cursor: pointer; font-weight: 650; white-space: nowrap; }
+button:hover:not(:disabled) { border-color: #80988b; background: var(--field); }
+button:disabled { opacity: .48; cursor: default; }
+:focus-visible { outline: 2px solid #467c62; outline-offset: 3px; }
+button.primary { background: var(--green); color: #fff; border-color: var(--green); }
+button.primary:hover:not(:disabled) { background: #173b2c; border-color: #173b2c; }
+.top { background: var(--paper); border-bottom: 1px solid var(--line); }
+.top-inner, main { width: min(1180px, calc(100% - 64px)); margin: 0 auto; }
+.top-inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 800; letter-spacing: -.04em; }
+.mark { width: 32px; height: 32px; display: grid; align-content: center; justify-content: center; gap: 3px; border-radius: 9px; background: var(--green); }
+.mark i { width: 14px; height: 2px; background: #ecefe7; border-radius: 5px; }
+.mark i:last-child { width: 9px; }
+.file-bar, .filters { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.file-bar { font-size: .86rem; }
+main { padding: 47px 0 28px; }
+.intro { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 23px; }
+h1 { font-size: clamp(2.3rem, 5vw, 3.4rem); line-height: 1.08; }
+.file-status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .87rem; margin-top: 10px; overflow-wrap: anywhere; }
+#dot { width: 8px; height: 8px; border-radius: 50%; background: #87958c; flex: 0 0 auto; }
+#dot.ready { background: #4b8967; }
+#dot.dirty { background: #a86322; }
+.summary { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+.summary article { padding: 19px 22px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
+.summary .balance { background: var(--green); border-color: var(--green); color: #fff; }
+.summary p { font-size: .88rem; font-weight: 650; }
+.summary strong { display: block; margin-top: 7px; font-size: clamp(1.4rem, 3vw, 2.2rem); letter-spacing: -.04em; overflow-wrap: anywhere; }
+.summary small { color: #e3ede4; }
+.income { color: var(--income); }
+.expense { color: var(--expense); }
+.transactions { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.section-bar { padding: 17px 20px; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.section-bar h2 { font-size: 1.35rem; }
+#count, .foot { font-size: .85rem; color: var(--muted); }
+.filters { font-size: .84rem; }
+.filters input[type=search] { width: 185px; }
+.filters input, .filters select { background: var(--field); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 12px 13px; border-top: 1px solid var(--line); }
+th { font-size: .75rem; font-weight: 750; color: var(--muted); background: var(--field); white-space: nowrap; }
+th:first-child, td:first-child { padding-left: 20px; }
+th:last-child, td:last-child { padding-right: 20px; }
+td { overflow-wrap: anywhere; }
+td small { display: block; color: var(--muted); margin-top: 3px; white-space: pre-wrap; }
+td small:empty { display: none; }
+.transactions td:nth-child(4) { white-space: nowrap; }
+.numeric { text-align: right; white-space: nowrap; font-weight: 750; font-variant-numeric: tabular-nums; }
+.entry-detail { display: flex; gap: 10px; align-items: center; min-width: 128px; }
+.entry-icon { display: grid; place-items: center; border-radius: 8px; flex: 0 0 30px; height: 30px; font-size: 1rem; }
+.entry-icon.in { background: #e8f3e9; color: var(--income); }
+.entry-icon.out { background: #f9ede6; color: var(--expense); }
+.row-actions { text-align: right; white-space: nowrap; }
+.row-actions button { font-size: .77rem; min-height: 34px; padding: 5px 8px; margin-left: 4px; }
+.empty { text-align: center; border-top: 1px solid var(--line); padding: 43px 16px 46px; }
+.empty-icon { display: inline-grid; place-items: center; width: 38px; height: 38px; background: var(--ground); border-radius: 10px; color: var(--green); font-weight: 800; font-size: 1.25rem; }
+.empty h3 { margin-top: 10px; font-size: 1.1rem; }
+.empty p { margin: 5px auto 15px; color: var(--muted); font-size: .9rem; }
+.foot { margin-top: 14px; }
+.notice { position: fixed; inset: auto 18px 18px auto; max-width: min(460px, calc(100% - 36px)); z-index: 2; border-radius: 9px; padding: 12px 15px; color: white; background: #20392f; box-shadow: 0 6px 22px #16241c24; }
+.notice:empty { display: none; }
+dialog { width: min(520px, calc(100% - 24px)); max-height: calc(100dvh - 24px); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink); padding: 22px; }
+dialog::backdrop { background: #14292075; }
+form { display: grid; gap: 13px; }
+form > label, .form-grid label { display: block; font-size: .87rem; font-weight: 650; min-width: 0; }
+form input:not([type=radio]), form textarea { display: block; width: 100%; margin-top: 5px; background: var(--field); }
+textarea { resize: vertical; }
+fieldset { border: 0; padding: 0; margin: 0; }
+fieldset label { display: inline-flex; gap: 5px; align-items: center; margin-right: 15px; }
+legend { font-size: .87rem; font-weight: 650; padding: 0; margin-bottom: 5px; }
+input[type=radio] { accent-color: var(--green); }
+.optional { color: var(--muted); font-weight: 400; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.editor-heading, .editor-actions { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.editor-actions { justify-content: end; }
+#form-error { color: var(--expense); font-size: .85rem; }
+#form-error:empty { display: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 720px) {
+  .top-inner, main { width: calc(100% - 28px); }
+  .top-inner { padding: 10px 0; flex-wrap: wrap; }
+  main { padding-top: 26px; }
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .summary article { padding: 12px; }
+  .summary .balance { grid-column: 1 / -1; }
+  .section-bar { display: grid; padding: 14px; }
+  .intro { align-items: start; flex-wrap: wrap; }
+  th, td { padding: 10px; }
+  th:first-child, td:first-child { padding-left: 14px; }
+  th:last-child, td:last-child { padding-right: 14px; }
+}
+
+#confirm-download { margin-top: 8px; font-size: .8rem; }
+
+.view-nav {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 18px;
+  padding: 5px;
+  overflow-x: auto;
+  background: #e6ece4;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.view-nav button { border-color: transparent; background: transparent; font-size: .86rem; }
+.view-nav button[aria-current="page"] { color: #fff; background: var(--green); }
+.view-nav button[aria-current="page"]:hover { color: #fff; background: var(--green); }
+.advanced-filters {
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 10px;
+  padding: 12px 20px;
+}
+.advanced-filters label, .month-picker { font-size: .8rem; color: var(--muted); font-weight: 650; }
+.advanced-filters :is(input, select), .form-grid select { display: block; width: 100%; min-width: 0; margin-top: 5px; }
+.month-picker { display: flex; align-items: center; gap: 7px; }
+.feature-view { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+.feature-heading { border-bottom: 1px solid var(--line); }
+.feature-heading p, .muted { color: var(--muted); font-size: .9rem; }
+.feature-content { display: grid; gap: 13px; min-width: 0; padding: 20px; }
+.feature-content h3 { font-size: 1rem; }
+.feature-content h3:not(:first-child) { margin-top: 10px; }
+.feature-table { border: 1px solid var(--line); border-radius: 8px; }
+.feature-table thead th { border-top: 0; }
+.feature-table tbody th { background: var(--paper); font-size: .87rem; color: var(--ink); white-space: normal; }
+.feature-table td .filters { flex-wrap: nowrap; }
+.feature-table button { font-size: .79rem; min-height: 34px; padding: 5px 8px; }
+.form-error { color: var(--expense); font-size: .85rem; }
+.form-error:empty { display: none; }
+.entry-icon:not(.in, .out) { background: var(--ground); color: var(--green); }
+@media (max-width: 720px) {
+  .advanced-filters, .feature-content { padding: 14px; }
+  .view-nav { margin-bottom: 14px; }
+}
+
+.filter-error { padding: 8px 20px; color: var(--expense); font-size: .85rem; }
+.filter-error:empty { display: none; }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Daybook</div>
+      <div class="file-bar">
+        <button id="open">Open CSV</button>
+        <button id="new">New CSV</button>
+        <button id="save" disabled>Save</button>
+        <button id="save-as" disabled>Save as</button>
+        <input type="file" id="upload" accept=".csv,text/csv" hidden>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="intro">
+      <div>
+        <h1>Your ledger</h1>
+        <p class="file-status"><span id="dot"></span><span id="file-status">No CSV open</span></p>
+        <button id="confirm-download" hidden>Confirm downloaded CSV</button>
+      </div>
+      <button class="primary" id="add" disabled><span aria-hidden="true">＋</span> Add transaction</button>
+    </section>
+    <nav class="view-nav" aria-label="Ledger views">
+      <button data-view="transactions" aria-current="page">Transactions</button>
+      <button data-view="reports">Reports</button>
+      <button data-view="budgets">Budgets</button>
+      <button data-view="accounts">Accounts</button>
+      <button data-view="recurring">Recurring</button>
+      <button data-view="debts">Money owed</button>
+      <button data-view="backups">Backups</button>
+    </nav>
+    <div id="transactions-view">
+    <section class="summary" aria-label="Ledger totals">
+      <article class="balance"><p>Net income</p><strong id="balance">0.00</strong><small>All income minus all expenses</small></article>
+      <article><p class="income">↓ &nbsp; Total income</p><strong id="income">0.00</strong></article>
+      <article><p class="expense">↑ &nbsp; Total expenses</p><strong id="expense">0.00</strong></article>
+    </section>
+    <section class="transactions" aria-labelledby="transactions-title">
+      <div class="section-bar">
+        <div><h2 id="transactions-title">Transactions</h2><p id="count">0 entries</p></div>
+        <div class="filters">
+          <input type="search" id="search" aria-label="Search transactions" placeholder="Search transactions">
+          <select id="filter" aria-label="Transaction type">
+            <option value="all">All types</option>
+            <option value="credit">Income</option>
+            <option value="debit">Expenses</option>
+            <option value="transfer">Transfers</option>
+            <option value="debt">Lending and repayments</option>
+          </select>
+          <select id="month" aria-label="Filter by month"><option value="">All months</option></select>
+          <button id="more-filters" type="button" aria-expanded="false" aria-controls="advanced-filters">More filters</button>
+          <button id="clear-filters" hidden>Clear filters</button>
+        </div>
+      </div>
+      <div id="advanced-filters" class="advanced-filters" hidden>
+        <label>Account<select id="account-filter"><option value="">All accounts</option></select></label>
+        <label>Category<select id="category-filter"><option value="">All categories</option></select></label>
+        <label>From<input type="date" id="from-filter"></label>
+        <label>To<input type="date" id="to-filter"></label>
+        <label>Min. amount<input type="number" min="0" step="0.01" id="min-filter" placeholder="Any"></label>
+        <label>Max. amount<input type="number" min="0" step="0.01" id="max-filter" placeholder="Any"></label>
+        <label>Sort<select id="sort-filter"><option value="">Newest first</option><option value="oldest">Oldest first</option><option value="high">Highest amount</option><option value="low">Lowest amount</option></select></label>
+      </div>
+      <p id="filter-error" class="filter-error" role="status"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Transaction</th><th scope="col">Category</th><th scope="col">Account</th><th scope="col">Date &amp; time</th><th scope="col" class="numeric">Amount</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody id="entries"></tbody>
+        </table>
+      </div>
+      <div id="empty" class="empty">
+        <span class="empty-icon" aria-hidden="true">≡</span>
+        <h3 id="empty-title">Start with a CSV</h3>
+        <p id="empty-text">Create a ledger or open a CSV you already have.</p>
+        <button id="empty-action">Create a ledger</button>
+      </div>
+    </section>
+    </div>
+    <section id="feature-view" class="feature-view" aria-labelledby="feature-heading" hidden>
+      <div class="section-bar feature-heading">
+        <div><h2 id="feature-heading" tabindex="-1"></h2><p id="feature-description"></p></div>
+        <div id="feature-actions" class="filters"></div>
+      </div>
+      <div id="feature-content" class="feature-content"></div>
+    </section>
+    <input id="restore-upload" type="file" accept=".csv,text/csv" hidden>
+    <p class="foot">Your ledger stays on this device until you copy or share the CSV.</p>
+  </main>
+  <p id="notice" role="status" class="notice"></p>
+  <dialog id="editor" aria-labelledby="editor-title">
+    <form id="transaction-form">
+      <div class="editor-heading"><h2 id="editor-title">Add transaction</h2><button id="close-editor" type="button" aria-label="Close">×</button></div>
+      <fieldset>
+        <legend>Transaction type</legend>
+        <label><input type="radio" name="type" value="debit" checked> Expense</label>
+        <label><input type="radio" name="type" value="credit"> Income</label>
+        <label><input type="radio" name="type" value="transfer"> Transfer</label>
+      </fieldset>
+      <label id="counterparty-field"><span id="counterparty-label">Payee</span><input name="counterparty" required placeholder="Who received the money?"></label>
+      <div class="form-grid">
+        <label>Amount<input name="amount" inputmode="decimal" required placeholder="0.00"></label>
+        <label>Category <span class="optional">(optional)</span><input name="category" list="categories" placeholder="e.g. Groceries"><datalist id="categories"></datalist></label>
+        <label><span id="account-label">Account</span><select name="account" required></select></label>
+        <label id="transfer-destination" hidden>To account<select name="to"></select></label>
+        <label>Date<input type="date" name="date" required></label>
+        <label>Time<input type="time" name="time" step="1"></label>
+      </div>
+      <label>Notes <span class="optional">(optional)</span><textarea name="notes" rows="3"></textarea></label>
+      <p id="form-error" role="alert"></p>
+      <div class="editor-actions"><button type="button" id="cancel">Cancel</button><button class="primary" type="submit">Save transaction</button></div>
+    </form>
+  </dialog>
+  <dialog id="feature-editor" aria-labelledby="feature-editor-title">
+    <form id="feature-form">
+      <div class="editor-heading"><h2 id="feature-editor-title"></h2><button id="feature-close" type="button" aria-label="Close">×</button></div>
+      <div id="feature-fields" class="form-grid"></div>
+      <p id="feature-error" class="form-error" role="alert"></p>
+      <div class="editor-actions"><button type="button" id="feature-cancel">Cancel</button><button class="primary" type="submit" id="feature-submit">Save</button></div>
+    </form>
+  </dialog>
+  <script>'use strict';
+
+const Ledger = (() => {
+  const previousHeaders = ['ID', 'Date', 'Time', 'Type', 'Amount', 'Counterparty', 'Category', 'Notes'];
+  const headers = [...previousHeaders, 'Account', 'Transfer To', 'Debt ID', 'Settings'];
+  const validId = value => typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(value);
+  const validCents = value => Number.isSafeInteger(value) && value > 0 && value <= 999999999999;
+  const validDate = value => {
+    if (typeof value !== 'string' || !/^(?!0000)\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(value + 'T00:00:00Z');
+    return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+  };
+  const text = value => typeof value === 'string' && Boolean(value.trim());
+  const categoryKey = value => value.trim().toLowerCase();
+  const emptySettings = () => ({
+    accounts: [{ id: 'default', name: 'General', opening: 0 }],
+    budgets: [], recurring: [], debts: []
+  });
+
+  function validateSettings(settings, entries) {
+    if (!settings || !['accounts', 'budgets', 'recurring', 'debts'].every(key => Array.isArray(settings[key]))) {
+      throw new Error('Daybook settings are missing or invalid.');
+    }
+    const ids = (items, check) => {
+      const result = new Set();
+      for (const item of items) {
+        if (!item || !validId(item.id) || result.has(item.id) || !check(item)) {
+          throw new Error('A Daybook account, budget, recurring item, or debt is invalid.');
+        }
+        result.add(item.id);
+      }
+      return result;
+    };
+    const accounts = ids(settings.accounts, item => text(item.name) &&
+      (item.opening === 0 || validCents(item.opening)));
+    if (!accounts.has('default')) throw new Error('The General account is missing.');
+    if (new Set(settings.accounts.map(item => categoryKey(item.name))).size !== accounts.size) {
+      throw new Error('Account names must be unique.');
+    }
+    ids(settings.budgets, item => text(item.category) && validCents(item.cents));
+    if (new Set(settings.budgets.map(item => categoryKey(item.category))).size !== settings.budgets.length) {
+      throw new Error('Budget categories must be unique.');
+    }
+    ids(settings.recurring, item => text(item.counterparty) && typeof item.category === 'string' &&
+      accounts.has(item.account) && validCents(item.cents) && ['debit', 'credit'].includes(item.type) &&
+      validDate(item.next) && ['weekly', 'monthly'].includes(item.frequency) &&
+      Number.isInteger(item.day) && item.day >= 1 && item.day <= 31);
+    const debts = ids(settings.debts, item => text(item.party) && ['lend', 'borrow'].includes(item.type));
+    const principals = new Map();
+    const payments = new Map();
+    for (const entry of entries) {
+      if (!accounts.has(entry.account || 'default') ||
+          (entry.type === 'transfer' && (!accounts.has(entry.to) || entry.to === entry.account)) ||
+          (entry.type !== 'transfer' && entry.to)) {
+        throw new Error('A transaction refers to an invalid account or transfer destination.');
+      }
+      if (['lend', 'borrow', 'collect', 'repay'].includes(entry.type)) {
+        if (!debts.has(entry.debt)) throw new Error('A debt transaction refers to an unknown debt.');
+        const principal = ['lend', 'borrow'].includes(entry.type);
+        if (principal && principals.has(entry.debt)) throw new Error('A debt has multiple starting transactions.');
+        if (principal) principals.set(entry.debt, entry);
+        else {
+          if (!payments.has(entry.debt)) payments.set(entry.debt, []);
+          payments.get(entry.debt).push(entry);
+        }
+      } else if (entry.debt) {
+        throw new Error('An unrelated transaction refers to a debt.');
+      }
+    }
+    for (const debt of settings.debts) {
+      const start = principals.get(debt.id);
+      if (start?.type !== debt.type) throw new Error('A debt is missing its starting transaction.');
+      let outstanding = BigInt(start.cents);
+      for (const payment of payments.get(debt.id) || []) {
+        if (payment.date < start.date || payment.type !== (debt.type === 'lend' ? 'collect' : 'repay')) {
+          throw new Error('A repayment date or direction is invalid.');
+        }
+        outstanding -= BigInt(payment.cents);
+      }
+      if (outstanding < 0n) throw new Error('A debt has been repaid beyond its original amount.');
+    }
+  }
+  const formula = /^[\s\uFEFF]*[=+@-]|^[\t\r\n]/;
+  const escapeText = value => value.startsWith("'") || formula.test(value) ? "'" + value : value;
+  const unescapeText = value => value.startsWith("'") &&
+    (value[1] === "'" || formula.test(value.slice(1))) ? value.slice(1) : value;
+  const makeId = () => globalThis.crypto.randomUUID?.() ??
+    Array.from(globalThis.crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
+
+  function amount(value, allowZero = false) {
+    const match = /^(\d{1,10})(?:\.(\d{1,2}))?$/.exec(String(value).trim());
+    if (!match) throw new Error('Enter an amount with up to 10 digits and two decimal places.');
+    const cents = Number(match[1]) * 100 + Number((match[2] || '').padEnd(2, '0'));
+    if (!allowZero && cents === 0) throw new Error('Amount must be greater than zero.');
+    return cents;
+  }
+
+  function validate(entry) {
+    if (!validDate(entry.date)) throw new Error('Use a valid date in YYYY-MM-DD format.');
+    if (entry.time && !/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(entry.time)) {
+      throw new Error('Use a valid 24-hour time.');
+    }
+    if (!['credit', 'debit', 'transfer', 'lend', 'borrow', 'collect', 'repay'].includes(entry.type)) throw new Error('Invalid transaction type.');
+    if (!entry.counterparty.trim()) throw new Error('Enter a source or payee.');
+    if (entry.time.length === 5) entry.time += ':00';
+    return entry;
+  }
+
+  function parse(text) {
+    const rows = [];
+    let row = [];
+    let field = '';
+    let quoted = false;
+    let closed = false;
+    const pushField = () => {
+      row.push(field);
+      field = '';
+      closed = false;
+    };
+    const pushRow = () => {
+      pushField();
+      rows.push(row);
+      row = [];
+    };
+    const source = text.replace(/^\uFEFF/, '');
+    for (let index = 0; index < source.length; index++) {
+      const char = source[index];
+      if (quoted) {
+        if (char !== '"') field += char;
+        else if (source[index + 1] === '"') {
+          field += '"';
+          index++;
+        } else {
+          quoted = false;
+          closed = true;
+        }
+      } else if (char === ',') {
+        pushField();
+      } else if (char === '\r' || char === '\n') {
+        if (char === '\r' && source[index + 1] === '\n') index++;
+        pushRow();
+      } else if (char === '"' && !field && !closed) {
+        quoted = true;
+      } else if (char === '"' || closed) {
+        throw new Error(`CSV row ${rows.length + 1} has unexpected characters around a quoted field.`);
+      } else {
+        field += char;
+      }
+    }
+    if (quoted) throw new Error(`CSV row ${rows.length + 1} contains an unclosed quote.`);
+    if (row.length || field || closed) pushRow();
+    return rows;
+  }
+
+  function read(csv) {
+    const [rawHeader, ...rows] = parse(csv);
+    const header = (rawHeader || []).map(value => value.trim().toLowerCase());
+    const versionTwo = header.join(',') === headers.join(',').toLowerCase();
+    const canonical = versionTwo || header.join(',') === previousHeaders.join(',').toLowerCase();
+    if (header.includes('settings') && !versionTwo) throw new Error('The Daybook CSV header has changed. Restore the original column order.');
+    const counterpartyColumn = header.includes('counterparty') ? 'counterparty' : 'description';
+    const typed = header.includes('type') && header.includes('amount');
+    const hasBothSides = header.includes('debit') && header.includes('credit');
+    if (!header.includes('date') || !header.includes(counterpartyColumn) || (!typed && !hasBothSides)
+        || new Set(header).size !== header.length) {
+      throw new Error('CSV needs Date, Counterparty or Description, and either Type and Amount or Debit and Credit columns.');
+    }
+
+    const ids = new Set();
+    const entries = [];
+    let settings;
+    rows.forEach((row, index) => {
+      if (row.length === 1 && !row[0].trim()) return;
+      try {
+        if (row.length !== header.length) throw new Error('The number of fields does not match the header.');
+        const get = key => row[header.indexOf(key)] ?? '';
+        if (versionTwo && get('type') === 'settings') {
+          if (settings !== undefined || row.some((value, column) => column !== 3 && column !== 11 && value)) {
+            throw new Error('Invalid settings row.');
+          }
+          settings = JSON.parse(get('settings'));
+          return;
+        }
+        if (versionTwo && get('settings')) throw new Error('Unexpected settings on a transaction.');
+        const getText = canonical ? key => unescapeText(get(key)) : get;
+        const id = canonical ? get('id') : makeId();
+        if (!validId(id) || ids.has(id)) {
+          throw new Error('Transaction ID is missing, invalid, or duplicated.');
+        }
+        let type;
+        let cents;
+        if (typed) {
+          const rawType = get('type').trim().toLowerCase();
+          type = ({ expense: 'debit', income: 'credit' })[rawType] || rawType;
+          cents = amount(get('amount'));
+        } else {
+          const debit = get('debit').trim() ? amount(get('debit'), true) : 0;
+          const credit = get('credit').trim() ? amount(get('credit'), true) : 0;
+          if (Boolean(debit) === Boolean(credit)) throw new Error('Enter a positive amount on exactly one side.');
+          type = debit ? 'debit' : 'credit';
+          cents = debit || credit;
+        }
+        entries.push(validate({
+          id, type, cents, date: get('date').trim(), time: get('time').trim(),
+          counterparty: getText(counterpartyColumn), category: getText('category'), notes: getText('notes'),
+          ...(versionTwo ? { account: get('account'), to: get('transfer to'), debt: get('debt id') } : {})
+        }));
+        ids.add(id);
+      } catch (error) {
+        throw new Error(`CSV row ${index + 2}: ${error.message}`);
+      }
+    });
+    if (versionTwo && !settings) throw new Error('The Daybook settings row is missing.');
+    settings = versionTwo ? settings : emptySettings();
+    validateSettings(settings, entries);
+    return { entries, canonical, settings };
+  }
+
+  function write(entries, settings = emptySettings()) {
+    validateSettings(settings, entries);
+    const quote = field => /[",\r\n]/.test(field) ? '"' + field.replaceAll('"', '""') + '"' : field;
+    const rows = entries.map(entry => [
+      entry.id, entry.date, entry.time, entry.type, (entry.cents / 100).toFixed(2),
+      escapeText(entry.counterparty), escapeText(entry.category), escapeText(entry.notes),
+      entry.account || 'default', entry.to || '', entry.debt || '', ''
+    ]);
+    const settingsRow = ['', '', '', 'settings', '', '', '', '', '', '', '', JSON.stringify(settings)];
+    return '\uFEFF' + [headers, ...rows, settingsRow].map(row => row.map(quote).join(',')).join('\r\n') + '\r\n';
+  }
+
+  return { amount, validate, validateSettings, emptySettings, categoryKey, read, write, makeId };
+})();
+
+if (typeof module !== 'undefined') module.exports = Ledger;
+</script>
+  <script>'use strict';
+
+let activeView = 'transactions';
+let reportMonth = '';
+let budgetMonth = '';
+let submitFeature;
+
+const features = {
+  reports: ['Reports', 'Compare income and expenses across months and see where spending went.'],
+  budgets: ['Budgets', 'Set a monthly limit for each spending category.'],
+  accounts: ['Accounts', 'Track the balance of each cash, bank, or wallet account.'],
+  recurring: ['Recurring', 'Review scheduled transactions and post each occurrence when it is due.'],
+  debts: ['Money owed', 'Track money you lent or borrowed and record partial repayments.'],
+  backups: ['Backups', 'Download a dated copy or reopen a backup as a separate ledger.']
+};
+
+function resetFeatureState() {
+  reportMonth = '';
+  budgetMonth = '';
+}
+
+function initFeatures() {
+  for (const tab of document.querySelectorAll('[data-view]')) {
+    tab.addEventListener('click', () => {
+      activeView = tab.dataset.view;
+      renderFeatureView();
+    });
+  }
+  for (const id of ['feature-cancel', 'feature-close']) {
+    byId(id).addEventListener('click', () => byId('feature-editor').close());
+  }
+  byId('feature-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (busy || !ledger) return;
+    try {
+      submitFeature(new FormData(event.currentTarget));
+      byId('feature-editor').close();
+      featureChanged();
+    } catch (error) {
+      byId('feature-error').textContent = error.message;
+    }
+  });
+  byId('restore-upload').addEventListener('change', event => {
+    const input = event.currentTarget;
+    const file = input.files[0];
+    input.value = '';
+    if (file && allowSwitch()) perform(() => openFile(file, null, true));
+  });
+}
+
+function element(tag, text, className) {
+  const node = document.createElement(tag);
+  if (text !== undefined) node.textContent = text;
+  if (className) node.className = className;
+  return node;
+}
+
+function featureButton(label, action, primary = false, blocked = false) {
+  const button = element('button', label, primary ? 'primary' : '');
+  button.type = 'button';
+  button.disabled = busy || blocked;
+  button.addEventListener('click', action);
+  return button;
+}
+
+function featureChanged() {
+  setDirty(true);
+  render();
+  notify('Ledger updated. Save the CSV to keep this change.');
+}
+
+function openFeatureForm(title, fields, submit, submitLabel = 'Save') {
+  const dialog = byId('feature-editor');
+  byId('feature-editor-title').textContent = title;
+  byId('feature-submit').textContent = submitLabel;
+  byId('feature-error').textContent = '';
+  submitFeature = submit;
+
+  const inputs = fields.map(([label, name, value, kind = 'text', options]) => {
+    const wrapper = element('label', label);
+    const control = element(kind === 'select' ? 'select' : 'input');
+    if (kind === 'select') replaceOptions(control, options, value);
+    else {
+      control.type = kind === 'money' ? 'text' : kind;
+      if (kind === 'money') control.inputMode = 'decimal';
+      control.value = value;
+    }
+    control.name = name;
+    control.required = name !== 'category' && name !== 'time';
+    if (kind === 'time') control.step = '1';
+    wrapper.append(control);
+    return wrapper;
+  });
+  byId('feature-fields').replaceChildren(...inputs);
+  dialog.showModal();
+}
+
+function renderFeatureView() {
+  const isTransactions = activeView === 'transactions';
+  byId('transactions-view').hidden = !isTransactions;
+  byId('feature-view').hidden = isTransactions;
+  for (const tab of document.querySelectorAll('[data-view]')) {
+    if (tab.dataset.view === activeView) tab.setAttribute('aria-current', 'page');
+    else tab.removeAttribute('aria-current');
+  }
+  if (isTransactions) return;
+  const [heading, description] = features[activeView];
+  byId('feature-heading').textContent = heading;
+  byId('feature-description').textContent = description;
+  const actions = byId('feature-actions');
+  const content = byId('feature-content');
+  actions.replaceChildren();
+  content.replaceChildren();
+  if (!ledger && activeView !== 'backups') {
+    content.append(element('p', 'Open or create a CSV to use this view.', 'muted'));
+    return;
+  }
+  const renderers = {
+    reports: renderReports, budgets: renderBudgets, accounts: renderAccounts,
+    recurring: renderRecurring, debts: renderDebts, backups: renderBackups
+  };
+  renderers[activeView](content, actions);
+}
+
+function featureTable(headers, rows, empty) {
+  if (!rows.length) return element('p', empty, 'muted');
+  const wrapper = element('div', undefined, 'table-wrap feature-table');
+  const table = wrapper.appendChild(element('table'));
+  const header = table.createTHead().insertRow();
+  for (const name of headers) {
+    const cell = element('th', name);
+    cell.scope = 'col';
+    header.append(cell);
+  }
+  const body = table.createTBody();
+  for (const row of rows) {
+    const tr = body.insertRow();
+    row.forEach((value, index) => {
+      const cell = index === 0 ? element('th') : element('td');
+      if (index === 0) cell.scope = 'row';
+      if (typeof value === 'string') cell.textContent = value;
+      else cell.append(value);
+      tr.append(cell);
+    });
+  }
+  return wrapper;
+}
+
+function rowButtons(...buttons) {
+  const wrapper = element('div', undefined, 'filters');
+  wrapper.append(...buttons);
+  return wrapper;
+}
+
+function monthPicker(selected, change) {
+  const current = localClock().date.slice(0, 7);
+  const months = [...new Set([current, selected, ...ledger.entries.map(entry => entry.date.slice(0, 7))])]
+    .filter(Boolean).sort().reverse();
+  const label = element('label', 'Month', 'month-picker');
+  const select = element('select');
+  replaceOptions(select, months.map(month => [month, month]), selected || current);
+  select.disabled = busy;
+  select.addEventListener('change', () => {
+    change(select.value);
+    renderFeatureView();
+    byId('feature-actions').querySelector('select')?.focus();
+  });
+  label.append(select);
+  return label;
+}
+
+const selectedMonth = month => month || localClock().date.slice(0, 7);
+const inMonth = (entry, month) => entry.date.startsWith(month + '-');
+const amountText = cents => (cents / 100).toFixed(2);
+const moneyText = cents => formatTotal(BigInt(cents));
+const FREQUENCIES = [['monthly', 'Monthly'], ['weekly', 'Weekly']];
+const DIRECTIONS = [['debit', 'Expense'], ['credit', 'Income']];
+const DEBT_DIRECTIONS = [['lend', 'I lent money'], ['borrow', 'I borrowed money']];
+
+function renderReports(content, actions) {
+  actions.append(monthPicker(reportMonth, value => { reportMonth = value; }));
+  const month = selectedMonth(reportMonth);
+  const records = ledger.entries.filter(entry => entry.type === 'credit' || entry.type === 'debit');
+  const grouped = new Map();
+  for (const entry of records) {
+    const key = entry.date.slice(0, 7);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(entry);
+  }
+  const categoryTotals = new Map();
+  for (const entry of grouped.get(month) || []) {
+    if (entry.type !== 'debit') continue;
+    const label = entry.category.trim() || 'Uncategorized';
+    const key = Ledger.categoryKey(label);
+    const group = categoryTotals.get(key) || { label, cents: 0n };
+    group.cents += BigInt(entry.cents);
+    categoryTotals.set(key, group);
+  }
+  const months = [...new Set([month, ...grouped.keys()])].sort().reverse();
+  const monthRows = months.map(key => {
+    const { income, expense, net } = totals(grouped.get(key) || []);
+    return [key, moneyText(income), moneyText(expense), moneyText(net)];
+  });
+  const categories = [...categoryTotals.values()].sort((a, b) => a.cents < b.cents ? 1 : a.cents > b.cents ? -1 : 0);
+  content.append(
+    element('h3', 'Spending by category · ' + month),
+    featureTable(['Category', 'Spent'], categories.map(item => [item.label, moneyText(item.cents)]), 'No expenses in this month.'),
+    element('h3', 'Monthly comparison'),
+    featureTable(['Month', 'Income', 'Expenses', 'Net'], monthRows, '')
+  );
+}
+
+function renderBudgets(content, actions) {
+  actions.append(monthPicker(budgetMonth, value => { budgetMonth = value; }),
+    featureButton('Add budget', () => editBudget(), true));
+  const month = selectedMonth(budgetMonth);
+  const spending = new Map();
+  for (const entry of ledger.entries) {
+    if (entry.type !== 'debit' || !inMonth(entry, month)) continue;
+    const key = Ledger.categoryKey(entry.category);
+    spending.set(key, (spending.get(key) || 0n) + BigInt(entry.cents));
+  }
+  const rows = ledger.settings.budgets.map(budget => {
+    const spent = spending.get(Ledger.categoryKey(budget.category)) || 0n;
+    const left = BigInt(budget.cents) - spent;
+    const status = left < 0n ? moneyText(-left) + ' over' : moneyText(left) + ' left';
+    const buttons = rowButtons(
+      featureButton('Edit', () => editBudget(budget)),
+      featureButton('Remove', () => removeSetting('budgets', budget, 'Remove this category budget?'))
+    );
+    return [budget.category, moneyText(budget.cents), moneyText(spent), status, buttons];
+  });
+  content.append(featureTable(['Category', 'Monthly limit', 'Spent', 'Remaining', 'Actions'], rows, 'No budgets yet.'));
+}
+
+function editBudget(budget) {
+  openFeatureForm(budget ? 'Edit budget' : 'Add budget', [
+    ['Category', 'budget-category', budget?.category ?? ''],
+    ['Monthly limit', 'amount', budget ? amountText(budget.cents) : '', 'money']
+  ], fields => {
+    const category = requiredText(fields.get('budget-category'));
+    const duplicate = ledger.settings.budgets.some(item => item !== budget &&
+      Ledger.categoryKey(item.category) === Ledger.categoryKey(category));
+    if (duplicate) throw new Error('A budget already exists for this category.');
+    saveSetting('budgets', budget, { category, cents: Ledger.amount(fields.get('amount')) });
+  });
+}
+
+function accountBalances(settings, entries) {
+  const balances = new Map(settings.accounts.map(account => [account.id, BigInt(account.opening)]));
+  for (const entry of entries) {
+    const id = entry.account || 'default';
+    const value = BigInt(entry.cents);
+    const outgoing = ['debit', 'transfer', 'lend', 'repay'].includes(entry.type);
+    balances.set(id, balances.get(id) + (outgoing ? -value : value));
+    if (entry.type === 'transfer') balances.set(entry.to, balances.get(entry.to) + value);
+  }
+  return balances;
+}
+
+function renderAccounts(content, actions) {
+  actions.append(featureButton('Add account', () => editAccount(), true));
+  const balances = accountBalances(ledger.settings, ledger.entries);
+  const total = [...balances.values()].reduce((sum, value) => sum + value, 0n);
+  content.append(element('h3', 'Total account balance · ' + moneyText(total)));
+  const rows = ledger.settings.accounts.map(account => {
+    const buttons = [featureButton('Edit', () => editAccount(account))];
+    if (account.id !== 'default') buttons.push(featureButton('Remove', () => removeAccount(account)));
+    return [account.name, moneyText(account.opening), moneyText(balances.get(account.id)), rowButtons(...buttons)];
+  });
+  content.append(featureTable(['Account', 'Opening balance', 'Recorded balance', 'Actions'], rows, ''));
+}
+
+function editAccount(account) {
+  openFeatureForm(account ? 'Edit account' : 'Add account', [
+    ['Account name', 'name', account?.name ?? ''],
+    ['Opening balance', 'opening', account ? amountText(account.opening) : '0.00', 'money']
+  ], fields => {
+    const name = requiredText(fields.get('name'));
+    if (ledger.settings.accounts.some(item => item !== account && Ledger.categoryKey(item.name) === Ledger.categoryKey(name))) {
+      throw new Error('An account already uses this name.');
+    }
+    saveSetting('accounts', account, { name, opening: Ledger.amount(fields.get('opening'), true) });
+  });
+}
+
+function removeAccount(account) {
+  const used = ledger.entries.some(entry => entry.account === account.id || entry.to === account.id) ||
+    ledger.settings.recurring.some(item => item.account === account.id);
+  if (used) {
+    notify('This account is used by a transaction or schedule and cannot be removed.');
+    return;
+  }
+  removeSetting('accounts', account, 'Remove this account?');
+}
+
+function advanceDue(date, frequency, anchorDay) {
+  const [year, month, day] = date.split('-').map(Number);
+  const utc = new Date('2000-01-01T00:00:00Z');
+  if (frequency === 'weekly') utc.setUTCFullYear(year, month - 1, day + 7);
+  else {
+    utc.setUTCFullYear(year, month + 1, 0);
+    const daysInNextMonth = utc.getUTCDate();
+    utc.setUTCDate(Math.min(daysInNextMonth, anchorDay));
+  }
+  const next = utc.toISOString().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(next)) throw new Error('The next date is outside the supported calendar.');
+  return next;
+}
+
+function renderRecurring(content, actions) {
+  actions.append(featureButton('Add schedule', () => editRecurring(), true));
+  const today = localClock().date;
+  const rows = [...ledger.settings.recurring].sort((a, b) => a.next.localeCompare(b.next)).map(item => {
+    const due = item.next <= today;
+    return [
+      item.counterparty, typeLabels[item.type], moneyText(item.cents), accountName(item.account),
+      item.frequency === 'weekly' ? 'Weekly' : 'Monthly', item.next, due ? 'Due' : 'Upcoming',
+      rowButtons(featureButton('Post', () => postRecurring(item), false, !due),
+        featureButton('Edit', () => editRecurring(item)),
+        featureButton('Remove', () => removeSetting('recurring', item, 'Remove this recurring schedule?')))
+    ];
+  });
+  content.append(featureTable(['Description', 'Type', 'Amount', 'Account', 'Frequency', 'Next due', 'Status', 'Actions'], rows,
+    'No recurring transactions scheduled.'));
+}
+
+function editRecurring(item) {
+  openFeatureForm(item ? 'Edit schedule' : 'Add schedule', [
+    ['Payee or income source', 'counterparty', item?.counterparty ?? ''],
+    ['Type', 'type', item?.type ?? 'debit', 'select', DIRECTIONS],
+    ['Amount', 'amount', item ? amountText(item.cents) : '', 'money'],
+    ['Account', 'account', item?.account ?? 'default', 'select', accountOptions()],
+    ['Category (optional)', 'category', item?.category ?? ''],
+    ['Frequency', 'frequency', item?.frequency ?? 'monthly', 'select', FREQUENCIES],
+    ['Next due date', 'next', item?.next ?? localClock().date, 'date']
+  ], fields => {
+    const next = fields.get('next');
+    const frequency = fields.get('frequency');
+    const day = next === item?.next && frequency === item?.frequency ? item.day : Number(next.slice(-2));
+    saveSetting('recurring', item, {
+      next, day, frequency, counterparty: requiredText(fields.get('counterparty')),
+      type: fields.get('type'), account: fields.get('account'), category: fields.get('category').trim(),
+      cents: Ledger.amount(fields.get('amount'))
+    });
+  });
+}
+
+function postRecurring(item) {
+  if (busy || !ledger.settings.recurring.includes(item) || item.next > localClock().date) return;
+  if (!window.confirm('Post the scheduled transaction dated ' + item.next + '?')) return;
+  try {
+    const next = advanceDue(item.next, item.frequency, item.day);
+    const { counterparty, account, category, cents, type } = item;
+    appendEntry({ date: item.next, counterparty, account, category, cents, type });
+    item.next = next;
+    featureChanged();
+  } catch (error) {
+    notify(error.message);
+  }
+}
+
+function debtPositions(entries) {
+  const positions = new Map();
+  for (const entry of entries) {
+    if (!entry.debt) continue;
+    const position = positions.get(entry.debt) || { principal: null, paid: 0n };
+    if (entry.type === 'lend' || entry.type === 'borrow') position.principal = entry;
+    else position.paid += BigInt(entry.cents);
+    positions.set(entry.debt, position);
+  }
+  return positions;
+}
+
+function renderDebts(content, actions) {
+  actions.append(featureButton('Add money owed', () => addDebt(), true));
+  const positions = debtPositions(ledger.entries);
+  let receivable = 0n;
+  let payable = 0n;
+  const rows = ledger.settings.debts.map(debt => {
+    const { principal, paid } = positions.get(debt.id);
+    const outstanding = BigInt(principal.cents) - paid;
+    if (debt.type === 'lend') receivable += outstanding;
+    else payable += outstanding;
+    return [
+      debt.party, debt.type === 'lend' ? 'Owed to me' : 'I owe',
+      principal.date, moneyText(principal.cents), moneyText(paid), moneyText(outstanding),
+      featureButton(outstanding ? 'Record repayment' : 'Settled', () => repayDebt(debt, principal, outstanding), false, !outstanding)
+    ];
+  });
+  content.append(element('h3', 'Owed to me · ' + moneyText(receivable) + '    |    I owe · ' + moneyText(payable)));
+  content.append(featureTable(['Person or business', 'Direction', 'Started', 'Original amount', 'Repaid', 'Outstanding', 'Actions'],
+    rows, 'No loans or debts recorded.'));
+}
+
+function addDebt() {
+  const { date, time } = localClock();
+  openFeatureForm('Add money owed', [
+    ['Person or business', 'party', ''],
+    ['Direction', 'type', 'lend', 'select', DEBT_DIRECTIONS],
+    ['Amount', 'amount', '', 'money'],
+    ['Account', 'account', 'default', 'select', accountOptions()],
+    ['Date', 'date', date, 'date'],
+    ['Time (optional)', 'time', time, 'time']
+  ], fields => {
+    const debt = { id: Ledger.makeId(), party: requiredText(fields.get('party')), type: fields.get('type') };
+    const cents = Ledger.amount(fields.get('amount'));
+    appendEntry({
+      counterparty: debt.party, type: debt.type, debt: debt.id, account: fields.get('account'), date: fields.get('date'), time: fields.get('time'), cents
+    });
+    ledger.settings.debts.push(debt);
+  }, 'Record starting amount');
+}
+
+function repayDebt(debt, principal, outstanding) {
+  const { date, time } = localClock();
+  openFeatureForm('Repayment · ' + debt.party, [
+    ['Amount', 'amount', amountText(Number(outstanding)), 'money'],
+    ['Account', 'account', principal.account, 'select', accountOptions()],
+    ['Date', 'date', date, 'date'],
+    ['Time (optional)', 'time', time, 'time']
+  ], fields => {
+    const cents = Ledger.amount(fields.get('amount'));
+    const date = fields.get('date');
+    if (BigInt(cents) > outstanding) throw new Error('Enter an amount within the outstanding balance.');
+    if (date < principal.date) throw new Error('The repayment cannot be earlier than the starting transaction.');
+    appendEntry({
+      counterparty: debt.party, type: debt.type === 'lend' ? 'collect' : 'repay', debt: debt.id,
+      account: fields.get('account'), date, time: fields.get('time'), cents
+    });
+  }, 'Record repayment');
+}
+
+function renderBackups(content, actions) {
+  actions.append(
+    featureButton('Download dated backup', () => perform(() => {
+      const stamp = localClock();
+      const name = ledger.name.replace(/\.csv$/i, '') + '-backup-' + stamp.date + '-' + stamp.time.replaceAll(':', '') + '.csv';
+      downloadCsv(Ledger.write(ledger.entries, ledger.settings), name);
+    }), true, !ledger),
+    featureButton('Restore from CSV', () => byId('restore-upload').click())
+  );
+  content.append(element('p', 'Backups include the current transactions and all ledger settings, including unsaved changes.'));
+  content.append(element('p', 'When you restore a backup, Daybook opens a separate copy. Save the restored ledger under a new filename.'));
+}
+
+function appendEntry(values) {
+  const entry = Ledger.validate({
+    id: Ledger.makeId(), time: '', category: '', notes: '', to: '', debt: '', ...values
+  });
+  ledger.entries.push(entry);
+}
+
+function saveSetting(key, existing, values) {
+  const collection = ledger.settings[key];
+  if (existing) Object.assign(existing, values);
+  else collection.push({ id: Ledger.makeId(), ...values });
+}
+
+function removeSetting(key, item, question) {
+  if (!busy && window.confirm(question)) {
+    ledger.settings[key] = ledger.settings[key].filter(value => value !== item);
+    featureChanged();
+  }
+}
+
+function requiredText(value) {
+  const clean = value.trim();
+  if (!clean) throw new Error('Enter a value in the required text field.');
+  return clean;
+}
+</script>
+  <script>'use strict';
+
+const byId = id => document.getElementById(id);
+const form = byId('transaction-form');
+const editor = byId('editor');
+const upload = byId('upload');
+const money = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+let ledger = null;
+let editing = null;
+let initialText = {};
+let busy = false;
+let noticeTimer;
+const filterIds = ['search', 'filter', 'month', 'account-filter', 'category-filter',
+  'from-filter', 'to-filter', 'min-filter', 'max-filter', 'sort-filter'];
+const debtTypes = ['lend', 'borrow', 'collect', 'repay'];
+const typeLabels = {
+  credit: 'Income', debit: 'Expense', transfer: 'Transfer', lend: 'Money lent',
+  borrow: 'Money borrowed', collect: 'Repayment received', repay: 'Repayment sent'
+};
+const accountName = id => ledger?.settings.accounts.find(account => account.id === (id || 'default'))?.name || 'General';
+const accountOptions = () => ledger.settings.accounts.map(account => [account.id, account.name]);
+
+function localClock(now = new Date()) {
+  const pad = value => String(value).padStart(2, '0');
+  return {
+    date: [now.getFullYear(), pad(now.getMonth() + 1), pad(now.getDate())].join('-'),
+    time: [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':')
+  };
+}
+
+function replaceOptions(select, options, selected = select.value) {
+  if (options.length !== select.options.length || options.some(([value, label], index) =>
+    select.options[index].value !== value || select.options[index].text !== label)) {
+    select.replaceChildren(...options.map(([value, label]) => new Option(label, value)));
+  }
+  select.value = options.some(([value]) => value === selected) ? selected : options[0]?.[0] || '';
+}
+
+function totals(entries) {
+  let income = 0n;
+  let expense = 0n;
+  for (const entry of entries) {
+    if (entry.type === 'credit') income += BigInt(entry.cents);
+    if (entry.type === 'debit') expense += BigInt(entry.cents);
+  }
+  return { income, expense, net: income - expense };
+}
+
+function notify(message) {
+  const notice = byId('notice');
+  notice.textContent = message;
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => { notice.textContent = ''; }, 8500);
+}
+
+function setDirty(dirty) {
+  ledger.dirty = dirty;
+  ledger.downloadPending = false;
+  window.removeEventListener('beforeunload', warnUnsaved);
+  if (dirty) window.addEventListener('beforeunload', warnUnsaved);
+}
+
+function warnUnsaved(event) {
+  event.preventDefault();
+  event.returnValue = true;
+}
+
+function allowSwitch() {
+  return !ledger?.dirty || window.confirm('This ledger has unsaved changes. Discard those changes?');
+}
+
+function resetFilters() {
+  for (const id of filterIds) byId(id).value = id === 'filter' ? 'all' : '';
+}
+
+function activate(next, dirty = false) {
+  ledger = next;
+  ledger.settings ??= Ledger.emptySettings();
+  resetFeatureState();
+  setDirty(dirty);
+  resetFilters();
+  render();
+}
+
+function newFile() {
+  if (!busy && allowSwitch()) {
+    activate({ name: 'Daybook.csv', entries: [], handle: null, legacy: false }, true);
+    notify('Ledger created. Select Save to choose where to keep the CSV.');
+  }
+}
+
+async function perform(action) {
+  if (busy) return;
+  busy = true;
+  render();
+  try {
+    await action();
+  } catch (error) {
+    if (error.name !== 'AbortError') notify(error.message || 'The file operation failed.');
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
+async function openFile(file, handle = null, restore = false) {
+  const bytes = await file.arrayBuffer();
+  let source;
+  try {
+    source = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  } catch {
+    throw new Error('Save the file as UTF-8 CSV, then open it again.');
+  }
+  const { entries, canonical, settings } = Ledger.read(source);
+  if (restore) {
+    const name = file.name.replace(/\.csv$/i, '') + '-restored.csv';
+    activate({ name, entries, settings, handle: null, legacy: false }, true);
+    notify('Backup opened as a separate ledger. Save it under a new name.');
+    return;
+  }
+  activate({ name: file.name, entries, settings, handle, source, legacy: !canonical });
+  notify(canonical ? 'CSV opened.' : 'Legacy CSV opened. Save as will create a Daybook copy.');
+}
+
+function pickFile() {
+  if (busy) return;
+  if (!window.showOpenFilePicker) {
+    upload.click();
+    return;
+  }
+  if (!allowSwitch()) return;
+  perform(async () => {
+    let selected;
+    try {
+      [selected] = await window.showOpenFilePicker({ types: csvTypes });
+    } catch (error) {
+      if (['SecurityError', 'NotSupportedError'].includes(error.name)) {
+        upload.click();
+        return;
+      }
+      throw error;
+    }
+    await openFile(await selected.getFile(), selected);
+  });
+}
+
+const csvTypes = [{ description: 'CSV ledger', accept: { 'text/csv': ['.csv'] } }];
+const filename = name => /\.csv$/i.test(name) ? name : name + '.csv';
+
+function downloadCsv(contents, name) {
+  const url = URL.createObjectURL(new Blob([contents], { type: 'text/csv;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30_000);
+  // The browser does not report whether the user completed or canceled a download.
+  notify('Download requested. Keep the CSV from your browser’s downloads.');
+}
+
+async function saveFile(saveAs) {
+  if (!ledger) return;
+  const contents = Ledger.write(ledger.entries, ledger.settings);
+  let handle = saveAs || ledger.legacy ? null : ledger.handle;
+  const name = ledger.legacy ? ledger.name.replace(/\.csv$/i, '') + '-daybook.csv' : filename(ledger.name);
+  if (!handle && window.showSaveFilePicker) {
+    try {
+      handle = await window.showSaveFilePicker({ suggestedName: name, types: csvTypes });
+    } catch (error) {
+      if (!['SecurityError', 'NotSupportedError'].includes(error.name)) throw error;
+    }
+  }
+  if (!handle) {
+    downloadCsv(contents, name);
+    ledger.downloadPending = ledger.dirty;
+    return;
+  }
+
+  if (ledger.handle && await handle.isSameEntry(ledger.handle)) {
+    if (ledger.legacy) throw new Error('Choose a different filename to preserve the original CSV.');
+    const currentFile = await handle.getFile();
+    const current = new TextDecoder('utf-8', { ignoreBOM: true }).decode(await currentFile.arrayBuffer());
+    if (current !== ledger.source) {
+      throw new Error('This CSV changed outside Daybook. Use Save as and choose another filename.');
+    }
+  }
+
+  const writer = await handle.createWritable();
+  try {
+    await writer.write(contents);
+    await writer.close();
+  } catch (error) {
+    await writer.abort().catch(() => {});
+    throw error;
+  }
+  Object.assign(ledger, { name: handle.name, handle, source: contents, legacy: false });
+  setDirty(false);
+  notify('CSV saved.');
+}
+
+function render() {
+  const entries = ledger?.entries ?? [];
+  const months = [...new Set(entries.map(entry => entry.date.slice(0, 7)))].sort().reverse();
+  const categories = [...new Set(entries.map(entry => entry.category).filter(Boolean))].sort();
+  replaceOptions(byId('month'), [['', 'All months'], ...months.map(month => [month, month])]);
+  replaceOptions(byId('account-filter'), [['', 'All accounts'], ...(ledger ? accountOptions() : [])]);
+  replaceOptions(byId('category-filter'), [['', 'All categories'], ...categories.map(category => [category, category])]);
+  const [rawQuery, type, month, account, category, from, to, min, max, sort] =
+    filterIds.map(id => byId(id).value);
+  const query = rawQuery.trim().toLowerCase();
+  byId('filter-error').textContent = from && to && from > to ? 'The start date must be on or before the end date.' :
+    min && max && Number(min) > Number(max) ? 'The minimum amount must be below or equal to the maximum.' : '';
+  const filtered = Boolean(query || type !== 'all' || month || account || category || from || to || min || max);
+  const visible = entries.filter(entry => {
+    const haystack = [entry.counterparty, entry.category, entry.notes, accountName(entry.account),
+      entry.to ? accountName(entry.to) : '', typeLabels[entry.type]].join(' ').toLowerCase();
+    return (!query || haystack.includes(query)) &&
+      (type === 'all' || type === entry.type || (type === 'debt' && debtTypes.includes(entry.type))) &&
+      (!month || entry.date.startsWith(month + '-')) &&
+      (!account || account === (entry.account || 'default') || account === entry.to) &&
+      (!category || entry.category === category) &&
+      (!from || entry.date >= from) && (!to || entry.date <= to) &&
+      (!min || entry.cents >= Math.round(Number(min) * 100)) &&
+      (!max || entry.cents <= Math.round(Number(max) * 100));
+  });
+  const newestFirst = (a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time);
+  visible.sort((a, b) => {
+    if (sort === 'oldest') return newestFirst(b, a);
+    if (sort === 'high') return b.cents - a.cents || newestFirst(a, b);
+    if (sort === 'low') return a.cents - b.cents || newestFirst(a, b);
+    return newestFirst(a, b);
+  });
+
+  const { income, expense, net } = totals(entries);
+  byId('balance').textContent = formatTotal(net);
+  byId('income').textContent = formatTotal(income);
+  byId('expense').textContent = formatTotal(expense);
+  byId('count').textContent = filtered ? `${visible.length} of ${entries.length} entries` :
+    `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}`;
+  byId('file-status').textContent = ledger ?
+    ledger.name + (ledger.dirty ? ' · Unsaved changes' : ' · Open') : 'No CSV open';
+  byId('confirm-download').hidden = !ledger?.downloadPending;
+  byId('confirm-download').disabled = busy;
+  byId('dot').className = ledger?.dirty ? 'dirty' : ledger ? 'ready' : '';
+  ['save', 'save-as', 'add'].forEach(id => { byId(id).disabled = !ledger || busy; });
+  ['open', 'new', 'empty-action'].forEach(id => { byId(id).disabled = busy; });
+  byId('clear-filters').hidden = !filtered && !sort;
+  byId('empty').hidden = visible.length > 0;
+  byId('empty-title').textContent = !ledger ? 'Start with a CSV' : filtered ? 'No matching transactions' : 'No transactions yet';
+  byId('empty-text').textContent = !ledger ? 'Create a ledger or open a CSV you already have.' :
+    filtered ? 'Clear the filters to see all entries.' : 'Add income or an expense to start tracking your money.';
+  byId('empty-action').textContent = !ledger ? 'Create a ledger' : filtered ? 'Clear filters' : 'Add transaction';
+  const rows = document.createDocumentFragment();
+  for (const entry of visible) rows.append(renderEntry(entry));
+  byId('entries').replaceChildren(rows);
+  renderFeatureView();
+}
+
+function formatTotal(cents) {
+  const negative = cents < 0n;
+  const absolute = negative ? -cents : cents;
+  const whole = absolute / 100n;
+  const fraction = String(absolute % 100n).padStart(2, '0');
+  return money.formatToParts(negative && whole === 0n ? -0 : negative ? -whole : whole)
+    .map(part => part.type === 'fraction' ? fraction : part.value).join('');
+}
+
+function renderEntry(entry) {
+  const row = document.createElement('tr');
+  const outgoing = ['debit', 'lend', 'repay'].includes(entry.type);
+  const transfer = entry.type === 'transfer';
+  const principal = ['lend', 'borrow'].includes(entry.type);
+  const description = row.insertCell();
+  const detail = document.createElement('div');
+  detail.className = 'entry-detail';
+  const icon = document.createElement('span');
+  icon.className = transfer ? 'entry-icon' : outgoing ? 'entry-icon out' : 'entry-icon in';
+  icon.textContent = transfer ? '↔' : outgoing ? '↗' : '↙';
+  icon.setAttribute('aria-hidden', 'true');
+  const label = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = entry.counterparty;
+  const notes = document.createElement('small');
+  notes.textContent = debtTypes.includes(entry.type) ? [typeLabels[entry.type], entry.notes].filter(Boolean).join(' · ') : entry.notes;
+  label.append(title, notes);
+  detail.append(icon, label);
+  description.append(detail);
+  row.insertCell().textContent = entry.category || '—';
+  row.insertCell().textContent = transfer ? accountName(entry.account) + ' → ' + accountName(entry.to) : accountName(entry.account);
+  const timestamp = row.insertCell();
+  timestamp.textContent = entry.date;
+  if (entry.time) {
+    const time = document.createElement('small');
+    time.textContent = entry.time;
+    timestamp.append(time);
+  }
+  const amount = row.insertCell();
+  amount.className = 'numeric ' + (transfer ? '' : outgoing ? 'expense' : 'income');
+  amount.textContent = (transfer ? '' : outgoing ? '−' : '+') + formatTotal(BigInt(entry.cents));
+  const actions = row.insertCell();
+  actions.className = 'row-actions';
+  if (principal) {
+    actions.textContent = 'Money owed';
+    return row;
+  }
+  if (!debtTypes.includes(entry.type)) addRowAction(actions, 'Edit', entry, () => openEditor(entry));
+  addRowAction(actions, 'Remove', entry, () => {
+    if (window.confirm(`Remove the transaction for “${entry.counterparty}”?`)) {
+      ledger.entries = ledger.entries.filter(item => item.id !== entry.id);
+      setDirty(true);
+      render();
+      notify('Transaction removed. Save the CSV to keep this change.');
+    }
+  });
+  return row;
+}
+
+function addRowAction(cell, text, entry, action) {
+  const button = document.createElement('button');
+  button.textContent = text;
+  button.disabled = busy;
+  button.setAttribute('aria-label', `${text} transaction for ${entry.counterparty}`);
+  button.addEventListener('click', action);
+  cell.append(button);
+}
+
+function syncPartyLabel() {
+  const type = form.elements.type.value;
+  const transfer = type === 'transfer';
+  byId('counterparty-label').textContent = type === 'debit' ? 'Payee' : 'Income source';
+  form.elements.counterparty.placeholder = type === 'debit' ? 'Who received the money?' : 'Where did the money come from?';
+  byId('counterparty-field').hidden = transfer;
+  form.elements.counterparty.required = !transfer;
+  byId('account-label').textContent = transfer ? 'From account' : 'Account';
+  byId('transfer-destination').hidden = !transfer;
+  form.elements.to.required = transfer;
+  form.elements.to.disabled = !transfer;
+  if (transfer) {
+    const destinations = accountOptions().filter(([id]) => id !== form.elements.account.value);
+    replaceOptions(form.elements.to, [['', 'Choose another account'], ...destinations]);
+  }
+}
+
+function openEditor(entry = null) {
+  if (!ledger || busy) return;
+  editing = entry;
+  form.reset();
+  const { date, time } = localClock();
+  form.elements.date.value = entry?.date ?? date;
+  form.elements.time.value = entry?.time ?? time;
+  replaceOptions(form.elements.account, accountOptions(), entry?.account || 'default');
+  if (entry) {
+    form.elements.type.value = entry.type;
+    form.elements.amount.value = (entry.cents / 100).toFixed(2);
+    for (const key of ['counterparty', 'category', 'notes']) form.elements[key].value = entry[key];
+  }
+  initialText = Object.fromEntries(['counterparty', 'category', 'notes'].map(key => [key, form.elements[key].value]));
+  const categories = [...new Set(ledger.entries.map(item => item.category).filter(Boolean))].sort();
+  byId('categories').replaceChildren(...categories.map(category => {
+    const option = document.createElement('option');
+    option.value = category;
+    return option;
+  }));
+  syncPartyLabel();
+  if (entry?.to) form.elements.to.value = entry.to;
+  byId('editor-title').textContent = entry ? 'Edit transaction' : 'Add transaction';
+  byId('form-error').textContent = '';
+  editor.showModal();
+  (entry?.type === 'transfer' ? form.elements.account : form.elements.counterparty).focus();
+}
+
+form.addEventListener('change', syncPartyLabel);
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  const fields = new FormData(form);
+  const getText = key => {
+    const value = form.elements[key].value;
+    if (editing && value === initialText[key]) return editing[key];
+    return key === 'notes' ? value : value.trim();
+  };
+  try {
+    const type = fields.get('type');
+    const account = fields.get('account');
+    const to = type === 'transfer' ? fields.get('to') : '';
+    if (type === 'transfer' && (!to || to === account)) throw new Error('Choose two different accounts.');
+    const entry = Ledger.validate({
+      id: editing?.id ?? Ledger.makeId(),
+      type, account, to, debt: '', cents: Ledger.amount(fields.get('amount')),
+      date: fields.get('date'), time: fields.get('time'),
+      counterparty: type === 'transfer' ? 'Account transfer' : getText('counterparty'), category: getText('category'), notes: getText('notes')
+    });
+    if (editing) ledger.entries[ledger.entries.indexOf(editing)] = entry;
+    else ledger.entries.push(entry);
+    setDirty(true);
+    editor.close();
+    render();
+    notify('Transaction recorded. Save the CSV to keep this change.');
+  } catch (error) {
+    byId('form-error').textContent = error.message;
+  }
+});
+byId('open').addEventListener('click', pickFile);
+byId('new').addEventListener('click', newFile);
+byId('save').addEventListener('click', () => perform(() => saveFile(false)));
+byId('save-as').addEventListener('click', () => perform(() => saveFile(true)));
+byId('confirm-download').addEventListener('click', () => {
+  setDirty(false);
+  render();
+  notify('Download confirmed. Use Save to download a fresh copy after editing.');
+});
+byId('add').addEventListener('click', () => openEditor());
+for (const id of ['cancel', 'close-editor']) byId(id).addEventListener('click', () => editor.close());
+for (const id of filterIds) byId(id).addEventListener('input', render);
+byId('clear-filters').addEventListener('click', () => { resetFilters(); render(); });
+byId('empty-action').addEventListener('click', () => {
+  if (!ledger) newFile();
+  else if (!byId('clear-filters').hidden) { resetFilters(); render(); }
+  else openEditor();
+});
+upload.addEventListener('change', () => {
+  const file = upload.files[0];
+  upload.value = '';
+  if (file && allowSwitch()) perform(() => openFile(file));
+});
+byId('more-filters').addEventListener('click', () => {
+  const advanced = byId('advanced-filters');
+  advanced.hidden = !advanced.hidden;
+  byId('more-filters').setAttribute('aria-expanded', String(!advanced.hidden));
+});
+initFeatures();
+render();
+</script>
+</body>
+</html>
