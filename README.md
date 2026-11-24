@@ -1,30 +1,37 @@
 # Daybook
 
-Daybook is an offline personal expense tracker. It records income (credits) and expenses (debits) with an amount, local date and time, source or payee, optional category, and notes. It also tracks accounts, budgets, recurring transactions, and money owed. Transactions and settings live in the same portable CSV.
+Daybook is a free, offline personal finance tracker. Record income, expenses, transfers, lending, and repayments. Review your monthly spending and budgets, and keep every transaction and ledger setting in a single CSV you can move between computers.
 
-## Getting started
+## Run Daybook
 
-1. Extract the entire ZIP. On Windows, double-click **Start Daybook.cmd**, or open **Daybook.html** in Microsoft Edge or Google Chrome. On Linux or macOS, open **Daybook.html** in a browser.
-2. Select **New CSV** to create a ledger, or **Open CSV** to load an existing one.
-3. Select **Add transaction**. The form starts at the device's current date and time, and you can change both for earlier transactions.
-4. Select **Save** after making changes. When the browser grants direct file access, Save updates the chosen CSV. Otherwise it downloads the complete updated ledger. After checking that the browser saved it, select **Confirm downloaded CSV**. Keep that copy and replace the older copy yourself if desired.
-5. To move between devices, first save, then copy the CSV and open it in Daybook on the other device. **Save as** creates a separate copy. Daybook opens one ledger at a time.
+1. On GitHub, choose **Code → Download ZIP** and extract it. If you cloned the repository, open your local checkout.
+2. On Windows, double-click [Start Daybook.cmd](Start%20Daybook.cmd), or open `Daybook.html` in Microsoft Edge or Google Chrome. On Linux or macOS, open `Daybook.html` in a desktop browser.
+3. Choose **New CSV** to start a ledger, or **Open CSV** to load an existing one.
+4. Choose **Add transaction** and enter an expense, income, or transfer. New entries start with your device’s current date and time. Change these values to record an earlier transaction.
+5. Click **Save**. With direct file access, Daybook updates the selected CSV. Otherwise, the browser downloads the full ledger. Check that the download completed, then click **Confirm downloaded CSV**.
 
-The CSV is the saved record. Changes made since the last successful save or download are held in the open window. An orange status indicator identifies unsaved changes. Keep a separate backup copy before moving or editing the ledger elsewhere. Close or reload a ledger after editing it in another app. Direct saving checks for external changes before overwriting.
+Daybook runs in your browser with no server, account, or internet connection required. An orange status indicator marks unsaved changes. Use **Save as** to keep a separate copy, and copy the CSV to another device to continue there.
 
-## Views
+## What you can do
 
-| View | What to do |
+| View | Features |
 | --- | --- |
-| Transactions | Search payees, income sources, notes, categories, or account names. Combine type, month, category, account, date range, and amount filters. Sort by date or amount. An account filter matches both sides of a transfer. |
-| Reports | Pick a month to see spending by category, or compare income, expenses, and net income across recorded months. |
-| Budgets | Set one repeating monthly limit per category. Pick a month to see how much you spent and how much is left or over. Budget matching ignores capitalization and surrounding spaces. |
-| Accounts | Create cash, bank, or wallet accounts. Set an opening balance and choose an account for each entry. Choose **Transfer** in the transaction form to move money between accounts. Existing entries start in General. |
-| Recurring | Set up weekly or monthly bills and income. Select **Post** when an occurrence is due and confirm it. Posting advances the schedule by one occurrence. Monthly schedules use the last day in shorter months and resume the original day when possible. |
-| Money owed | Record money lent or borrowed and select the account that received or paid it. Record partial or full repayments and see how much is still outstanding. |
-| Backups | Download a timestamped snapshot of the open ledger, including unsaved changes. **Restore from CSV** opens a working copy for you to save under a new filename. |
+| **Transactions** | Add, edit, or remove ordinary transactions. Search by payee, income source, category, notes, or account. Filter by type or month, or use **More filters** to combine account, category, date range, and amount. Sort by date or amount. |
+| **Reports** | Compare income, expenses, and net income across recorded months. Select a month to see its spending by category. |
+| **Budgets** | Set a monthly limit per category and select a month to see the amount spent and how much remains or exceeds the limit. Budget matching ignores capitalization and surrounding spaces. |
+| **Accounts** | Track cash, bank, and wallet balances. Set opening balances and record transfers between accounts. Imported transactions from older ledgers start in General. |
+| **Recurring** | Schedule weekly or monthly bills and income. Confirm each due entry with **Post**. Monthly schedules use the last day in shorter months and resume their original day when possible. |
+| **Money owed** | Track money lent or borrowed, record partial or full repayments, and see the outstanding amount. |
+| **Backups** | Download a timestamped CSV snapshot that includes unsaved changes. Restore a backup as a separate working copy and save it under a new filename. |
 
-Transaction totals and reports count income and expenses. Account balances also include opening balances, transfers, money lent or borrowed, and repayments. Recurring transactions only affect balances after you post them. For an incorrect debt repayment, remove its transaction and record the corrected amount from **Money owed**.
+### Try the new features
+
+- **Track a transfer.** Create a second account under **Accounts**. In **Add transaction**, choose **Transfer** and select the source and destination. Account balances change, while the income and expense totals stay the same. Filtering by either account shows the transfer.
+- **Check a budget.** Record an expense with a category, then add a limit for that category under **Budgets**. Select the expense’s month to see its effect.
+- **Record a partial repayment.** In **Money owed**, record money lent or borrowed, then choose **Record repayment** and enter an amount smaller than the outstanding balance. To correct a repayment, remove its transaction and enter the corrected amount from **Money owed**.
+- **Test a restore.** In **Backups**, download a dated backup, then reopen it using **Restore from CSV**. Save the restored copy under a different filename.
+
+Account balances include opening balances, transfers, lending, borrowing, and repayments. Reports measure income and expenses. Recurring transactions affect balances once you post them.
 
 ## CSV files
 
@@ -50,9 +57,19 @@ ID,Date,Time,Type,Amount,Counterparty,Category,Notes,Account,Transfer To,Debt ID
 | Linux and macOS | Open the HTML in a desktop browser. Choose Chrome if you want direct CSV saving and the browser exposes it. |
 | Android and iPhone/iPad | Future packaging targets. The layout adapts to small screens, and portable CSV import/export can be reused in a mobile release. |
 
-This release is a self-contained HTML app. It uses the installed browser to display the interface and requires no server, account, package install, or internet connection. It includes no native installer. Some browser or system policies may restrict access to local files. The app offers file upload and download as a fallback.
+The repository includes a self-contained HTML app. It uses the installed browser to display the interface and requires no server, account, package install, or internet connection. It includes no native installer. Some browser or system policies may restrict access to local files. The app offers file upload and download as a fallback.
 
 For Android and iOS, a future native package can reuse this interface and CSV parser. It would connect **Open CSV** and **Save as** to each platform’s document picker and be tested on actual devices before release. The same CSV format can travel between desktop and mobile.
+
+## Build from source
+
+Open a terminal in the repository folder and run:
+
+```bash
+python3 build.py
+```
+
+On Windows with the Python launcher, use `py build.py`. The script rebuilds `Daybook.html` using the Python standard library. Open that file to run the updated app.
 
 ## Project structure
 
