@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Daybook
+Comment=Offline expense and budget tracker
+Exec=xdg-open /usr/share/daybook/Daybook.html
+Icon=accessories-calculator
+Terminal=false
+Categories=Office;Finance;
