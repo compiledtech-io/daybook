@@ -2,7 +2,19 @@
 
 Daybook is a free, offline personal finance tracker. Record income, expenses, transfers, lending, and repayments. Review your monthly spending and budgets, and keep every transaction and ledger setting in a single CSV you can move between computers.
 
-## Run Daybook
+## Download Daybook
+
+Download a package from [GitHub Releases](https://github.com/compiledtech-io/daybook/releases), or run the HTML app directly from the repository.
+
+| Platform | Package and setup |
+| --- | --- |
+| Windows | Run the Windows setup EXE. It installs for your user account and adds Daybook to the Start menu. Daybook opens in your default browser. The preview installer is unsigned. |
+| Debian and Ubuntu | Open the `.deb` in your desktop package installer, or run `sudo apt install ./daybook_0.1.0_all.deb`. Launch Daybook from your applications menu. |
+| Android 8.0 and newer | Download the signed **Daybook Preview** APK. It uses Android’s document picker to open and save CSVs. Choose a location on your device for offline use. This preview supports CSV files up to 16 MB. |
+
+The Android preview uses a separate app ID and a preview signing key. Keep CSV backups when moving between versions or devices.
+
+## Run Daybook from the repository
 
 1. On GitHub, choose **Code → Download ZIP** and extract it. If you cloned the repository, open your local checkout.
 2. On Windows, double-click [Start Daybook.cmd](Start%20Daybook.cmd), or open `Daybook.html` in Microsoft Edge or Google Chrome. On Linux or macOS, open `Daybook.html` in a desktop browser.
@@ -53,13 +65,15 @@ ID,Date,Time,Type,Amount,Counterparty,Category,Notes,Account,Transfer To,Debt ID
 
 | Platform | How to run |
 | --- | --- |
-| Windows | Windows launcher or open the HTML in Edge or Chrome |
-| Linux and macOS | Open the HTML in a desktop browser. Choose Chrome if you want direct CSV saving and the browser exposes it. |
-| Android and iPhone/iPad | Future packaging targets. The layout adapts to small screens, and portable CSV import/export can be reused in a mobile release. |
+| Windows | Setup EXE, Windows launcher, or open the HTML in a desktop browser |
+| Linux | Debian package or open the HTML in a desktop browser |
+| macOS | Open the HTML in a desktop browser |
+| Android | Preview APK with Android’s document picker |
+| iPhone and iPad | Future packaging targets |
 
-The repository includes a self-contained HTML app. It uses the installed browser to display the interface and requires no server, account, package install, or internet connection. It includes no native installer. Some browser or system policies may restrict access to local files. The app offers file upload and download as a fallback.
+The repository includes a self-contained HTML app. It uses the installed browser to display the interface and requires no server, account, package install, or internet connection. The desktop packages install the same browser-based app. Some browser or system policies may restrict access to local files. The app offers file upload and download as a fallback.
 
-For Android and iOS, a future native package can reuse this interface and CSV parser. It would connect **Open CSV** and **Save as** to each platform’s document picker and be tested on actual devices before release. The same CSV format can travel between desktop and mobile.
+The same CSV format works in the desktop app and the Android preview. On desktop, use Chrome or Edge when you want direct file saving and the browser exposes it.
 
 ## Build from source
 
@@ -71,6 +85,19 @@ python3 build.py
 
 On Windows with the Python launcher, use `py build.py`. The script rebuilds `Daybook.html` using the Python standard library. Open that file to run the updated app.
 
+### Build the packages
+
+Builds run on a Linux build machine with Python 3. The Debian package requires `dpkg-deb`. The Windows installer requires NSIS (`makensis`). Android requires a JDK and Android SDK with `aapt2`, `d8`, `zipalign`, and `apksigner`.
+
+```bash
+python3 packaging/build_packages.py linux --output dist
+python3 packaging/build_packages.py windows --output dist
+python3 packaging/build_packages.py android --output dist \
+  --preview-keystore "$HOME/.local/share/daybook/daybook-preview.p12"
+```
+
+Use `--sdk`, `--platform`, and `--build-tools` if your SDK differs from the default. Reuse the same private preview keystore for updates and increase `--version-code` for newer Android builds. Keep the keystore outside the repository.
+
 ## Project structure
 
 - `src/index.html` contains the interface.
@@ -78,6 +105,7 @@ On Windows with the Python launcher, use `py build.py`. The script rebuilds `Day
 - `src/ledger.js` implements CSV validation and serialization.
 - `src/app.js` manages transactions, filters, and browser file operations.
 - `src/features.js` implements the additional views and their workflows.
+- `packaging/` contains the desktop package recipes and the Android preview wrapper.
 - `build.py` bundles the source into `Daybook.html`; run it with Python 3 only when changing the source.
 
 ## License
