@@ -11,7 +11,7 @@ const features = {
   accounts: ['Accounts', 'Track the balance of each cash, bank, or wallet account.'],
   recurring: ['Recurring', 'Review scheduled transactions and post each occurrence when it is due.'],
   debts: ['Money owed', 'Track money you lent or borrowed and record partial repayments.'],
-  backups: ['Backups', 'Download a dated copy or reopen a backup as a separate ledger.']
+  backups: ['Backups', 'Save a dated copy or reopen a backup as a separate ledger.']
 };
 
 function resetFeatureState() {
@@ -433,12 +433,21 @@ function repayDebt(debt, principal, outstanding) {
 
 function renderBackups(content, actions) {
   actions.append(
-    featureButton('Download dated backup', () => perform(() => {
+    featureButton(window.DaybookFiles ? 'Save dated backup' : 'Download dated backup', () => perform(async () => {
       const stamp = localClock();
       const name = ledger.name.replace(/\.csv$/i, '') + '-backup-' + stamp.date + '-' + stamp.time.replaceAll(':', '') + '.csv';
-      downloadCsv(Ledger.write(ledger.entries, ledger.settings), name);
+      await downloadCsv(Ledger.write(ledger.entries, ledger.settings), name);
     }), true, !ledger),
-    featureButton('Restore from CSV', () => byId('restore-upload').click())
+    featureButton('Restore from CSV', () => {
+      if (!window.DaybookFiles) {
+        byId('restore-upload').click();
+        return;
+      }
+      if (allowSwitch()) perform(async () => {
+        const [handle] = await window.showOpenFilePicker({ types: csvTypes });
+        await openFile(await handle.getFile(), null, true);
+      });
+    })
   );
   content.append(element('p', 'Backups include the current transactions and all ledger settings, including unsaved changes.'));
   content.append(element('p', 'When you restore a backup, Daybook opens a separate copy. Save the restored ledger under a new filename.'));

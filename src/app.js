@@ -147,7 +147,12 @@ function pickFile() {
 const csvTypes = [{ description: 'CSV ledger', accept: { 'text/csv': ['.csv'] } }];
 const filename = name => /\.csv$/i.test(name) ? name : name + '.csv';
 
-function downloadCsv(contents, name) {
+async function downloadCsv(contents, name) {
+  if (window.DaybookFiles) {
+    await window.DaybookFiles.saveCopy(contents, name);
+    notify('CSV copy saved.');
+    return;
+  }
   const url = URL.createObjectURL(new Blob([contents], { type: 'text/csv;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
@@ -173,7 +178,7 @@ async function saveFile(saveAs) {
     }
   }
   if (!handle) {
-    downloadCsv(contents, name);
+    await downloadCsv(contents, name);
     ledger.downloadPending = ledger.dirty;
     return;
   }
